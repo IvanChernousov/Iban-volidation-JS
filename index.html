@@ -26,29 +26,31 @@ function validateIBAN(iban) {
     return parseInt(remainder, 10) % 97 === 1;
 }
 
-(function waitForBX() {
+(function waitForCRM() {
 
-    if (typeof BX === 'undefined' || !BX.Crm) {
-        setTimeout(waitForBX, 500);
+    if (!window.top.BX || !window.top.BX.Crm) {
+        setTimeout(waitForCRM, 500);
         return;
     }
 
-    BX.addCustomEvent('BX.Crm.EntityEditor:onSave', function(event) {
+    window.top.BX.addCustomEvent(
+        'BX.Crm.EntityEditor:onSave',
+        function(event) {
 
-        let editor = event.getData()[0];
-        let ibanField = editor.getControlById('UF_CRM_IBAN');
+            let editor = event.getData()[0];
+            let ibanField = editor.getControlById('UF_CRM_IBAN');
 
-        if (!ibanField) return;
+            if (!ibanField) return;
 
-        let iban = ibanField.getValue();
-        if (!iban) return;
+            let iban = ibanField.getValue();
+            if (!iban) return;
 
-        if (!validateIBAN(iban)) {
-            alert("❌ IBAN некорректный. Сохранение запрещено.");
-            event.preventDefault();
+            if (!validateIBAN(iban)) {
+                alert("❌ IBAN некорректный. Сохранение запрещено.");
+                event.preventDefault();
+            }
         }
-
-    });
+    );
 
 })();
 
