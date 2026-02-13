@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://api.bitrix24.com/api/v1/"></script>
+</head>
+<body>
+
+<script>
+
+BX24.init(function() {
+
+    function validateIBAN(iban) {
+        if (!iban) return false;
+
+        iban = iban.replace(/\s+/g, '').toUpperCase();
+        if (!/^[A-Z0-9]+$/.test(iban)) return false;
+        if (iban.length < 15 || iban.length > 34) return false;
+
+        iban = iban.slice(4) + iban.slice(0, 4);
+        iban = iban.replace(/[A-Z]/g, c => c.charCodeAt(0) - 55);
+
+        let remainder = iban;
+        while (remainder.length > 2) {
+            let block = remainder.slice(0, 9);
+            remainder = (parseInt(block, 10) % 97) + remainder.slice(block.length);
+        }
+
+        return parseInt(remainder, 10) % 97 === 1;
+    }
+
+    BX.addCustomEvent('BX.Crm.EntityEditor:onSave', function(event) {
+
+        let editor = event.getData()[0];
+        let ibanField = editor.getControlById('UF_CRM_IBAN');
+
+        if (!ibanField) return;
+
+        let iban = ibanField.getValue();
+        if (!iban) return;
+
+        if (!validateIBAN(iban)) {
+            alert("❌ IBAN некорректный. Сохранение запрещено.");
+            event.preventDefault();
+        }
+
+    });
+
+});
+
+</script>
+
+</body>
+</html>
