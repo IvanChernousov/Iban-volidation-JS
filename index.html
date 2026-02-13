@@ -1,32 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <script src="https://api.bitrix24.com/api/v1/"></script>
+<meta charset="utf-8">
 </head>
 <body>
 
 <script>
 
-BX24.init(function() {
+function validateIBAN(iban) {
+    if (!iban) return false;
 
-    function validateIBAN(iban) {
-        if (!iban) return false;
+    iban = iban.replace(/\s+/g, '').toUpperCase();
+    if (!/^[A-Z0-9]+$/.test(iban)) return false;
+    if (iban.length < 15 || iban.length > 34) return false;
 
-        iban = iban.replace(/\s+/g, '').toUpperCase();
-        if (!/^[A-Z0-9]+$/.test(iban)) return false;
-        if (iban.length < 15 || iban.length > 34) return false;
+    iban = iban.slice(4) + iban.slice(0, 4);
+    iban = iban.replace(/[A-Z]/g, c => c.charCodeAt(0) - 55);
 
-        iban = iban.slice(4) + iban.slice(0, 4);
-        iban = iban.replace(/[A-Z]/g, c => c.charCodeAt(0) - 55);
+    let remainder = iban;
+    while (remainder.length > 2) {
+        let block = remainder.slice(0, 9);
+        remainder = (parseInt(block, 10) % 97) + remainder.slice(block.length);
+    }
 
-        let remainder = iban;
-        while (remainder.length > 2) {
-            let block = remainder.slice(0, 9);
-            remainder = (parseInt(block, 10) % 97) + remainder.slice(block.length);
-        }
+    return parseInt(remainder, 10) % 97 === 1;
+}
 
-        return parseInt(remainder, 10) % 97 === 1;
+(function waitForBX() {
+
+    if (typeof BX === 'undefined' || !BX.Crm) {
+        setTimeout(waitForBX, 500);
+        return;
     }
 
     BX.addCustomEvent('BX.Crm.EntityEditor:onSave', function(event) {
@@ -46,7 +50,7 @@ BX24.init(function() {
 
     });
 
-});
+})();
 
 </script>
 
